@@ -1,10 +1,12 @@
-from aiohttp import web
 from json import JSONDecodeError
+from aiohttp import web
 
+from authorization.decorators import login_required
 from models import User
 from schema import UserSchema, UserParams
 
 
+@login_required
 async def get_users(request):
     user = await User.query.gino.all()
     user_schema = UserSchema(many=True)
@@ -16,6 +18,7 @@ async def get_users(request):
     return web.json_response(resp)
 
 
+@login_required
 async def get_user(request):
     user_schema = UserSchema()
     id_ = int(request.match_info.get('user_id'))
@@ -27,6 +30,7 @@ async def get_user(request):
     return web.json_response(resp)
 
 
+@login_required
 async def post_user(request):
     params = UserParams()
     try:
