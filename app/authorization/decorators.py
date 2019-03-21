@@ -1,24 +1,35 @@
+from http import HTTPStatus
+import jwt
 from aiohttp import web
-from aiohttp_session import get_session
 
-# from models import User
+from conf import APP_SECRET
 
 
-def login_required(fn):
+def jwt_required(fn):
     async def wrapped(request, *args, **kwargs):
-        app = request.app
-        router = app.router
+        auth_header = request.headers.get('Authorization', None)
+        if not auth_header:
+            return web.json_response(
+                data={
+                    'message': 'Missing Authorization header'
+                },
+                status=HTTPStatus.UNAUTHORIZED
+            )
 
-        session = await get_session(request)
+        _, access_token = auth_header.split(' ')
+        try:
+            token = jwt.decode(access_token, APP_SECRET)
+        except jwt.ExpiredSignatureError:
+            return web.json_response(
+                data={
+                    'message': 'Token has expired, use refresh_token',
+                    'refresh_endpoint': '/auth/token/refresh',
+                },
+                status=HTTPStatus.UNAUTHORIZED
+            )
 
-        if 'user_id' not in session:
-            return web.HTTPFound(router['google_auth'].url_for())
+        request.user_id = token['user_id']
 
-        user_id = session['user_id']
-
-        # user = await User.query.where(User.id == user_id).gino.first()
-
-        app['user'] = user_id
         return await fn(request, *args, **kwargs)
 
     return wrapped

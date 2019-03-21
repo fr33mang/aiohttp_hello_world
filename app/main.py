@@ -8,7 +8,7 @@ from aiohttp_session.cookie_storage import EncryptedCookieStorage
 
 import conf
 from views import get_users, get_user, post_user
-from authorization.views import google_auth, google_auth_sucess
+from authorization.views import google_auth, google_auth_sucess, refresh_token
 from postgres.db import db
 
 
@@ -27,8 +27,9 @@ app.router.add_get('/users', get_users, name='index')
 app.router.add_get('/users/{user_id}', get_user, name='user')
 app.router.add_post('/users', post_user, name='post_user')
 
+app.router.add_post('/auth/token/refresh', refresh_token,
+                    name='jwt_refresh_token')
 app.router.add_get('/auth/google', google_auth, name='google_auth')
-
 app.router.add_get('/auth/google/sucess', google_auth_sucess,
                    name='google_auth_sucess')
 
